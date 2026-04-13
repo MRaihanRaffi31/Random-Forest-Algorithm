@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prediksi Dropout Mahasiswa - Random Forest</title>
+  <style>
+    :root {
+      --bg: #eef4ff;
+      --surface: rgba(255,255,255,0.82);
+      --surface-strong: #ffffff;
+      --text: #10213d;
+      --muted: #5b6b88;
+      --primary: #335dff;
+      --primary-2: #6c8cff;
+      --accent: #14b8a6;
+      --danger: #e11d48;
+      --warning: #f59e0b;
+      --success: #16a34a;
+      --border: rgba(148, 163, 184, 0.22);
+      --shadow: 0 20px 50px rgba(39, 76, 173, 0.12);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(108, 140, 255, 0.22), transparent 26%),
+        radial-gradient(circle at top right, rgba(20, 184, 166, 0.14), transparent 24%),
+        linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .glass {
+      background: var(--surface);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border-radius: 34px;
+      padding: 34px;
+      margin-bottom: 26px;
+      background:
+        linear-gradient(135deg, rgba(51,93,255,0.95), rgba(108,140,255,0.95) 52%, rgba(20,184,166,0.88));
+      color: white;
+      box-shadow: 0 26px 60px rgba(51, 93, 255, 0.28);
+    }
+
+    .hero::before,
+    .hero::after {
+      content: "";
+      position: absolute;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.14);
+    }
+
+    .hero::before { width: 260px; height: 260px; right: -70px; top: -70px; }
+    .hero::after { width: 180px; height: 180px; right: 160px; bottom: -70px; }
+
+    .hero-top {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      gap: 24px;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.16);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      margin-bottom: 16px;
+    }
+
+    .hero h1 {
+      margin: 0 0 12px;
+      font-size: 38px;
+      line-height: 1.18;
+      max-width: 780px;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 780px;
+      line-height: 1.75;
+      color: rgba(255,255,255,0.92);
+      font-size: 15px;
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(150px, 1fr));
+      gap: 14px;
+      min-width: 320px;
+    }
+
+    .stat-card {
+      border-radius: 22px;
+      padding: 18px;
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.16);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+    }
+
+    .stat-label { font-size: 12px; color: rgba(255,255,255,0.8); margin-bottom: 8px; }
+    .stat-value { font-size: 20px; font-weight: 800; }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .card {
+      border-radius: var(--radius-xl);
+      padding: 26px;
+    }
+
+    .card h2 {
+      margin: 0 0 18px;
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .subtitle {
+      margin: -6px 0 18px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .tab-btn {
+      border: 1px solid rgba(148,163,184,0.22);
+      background: white;
+      color: #27446e;
+      border-radius: 999px;
+      padding: 11px 16px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      color: white;
+      box-shadow: 0 14px 30px rgba(51,93,255,0.22);
+      border-color: transparent;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #304261;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid rgba(148,163,184,0.28);
+      background: rgba(255,255,255,0.9);
+      border-radius: 16px;
+      padding: 13px 15px;
+      outline: none;
+      font-size: 14px;
+      color: var(--text);
+      transition: 0.2s ease;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: rgba(51,93,255,0.5);
+      box-shadow: 0 0 0 4px rgba(51,93,255,0.12);
+      transform: translateY(-1px);
+    }
+
+    .upload-box {
+      border: 2px dashed rgba(51,93,255,0.22);
+      border-radius: 22px;
+      padding: 22px;
+      background: linear-gradient(180deg, #fbfdff 0%, #f5f9ff 100%);
+    }
+
+    .upload-note {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-top: 10px;
+    }
+
+    .sample-box {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: #f8fbff;
+      border: 1px solid rgba(148,163,184,0.18);
+      font-size: 12px;
+      color: #385175;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+
+    .section-chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .chip {
+      padding: 9px 13px;
+      border-radius: 999px;
+      background: #eff4ff;
+      color: #335dff;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid rgba(51,93,255,0.12);
+    }
+
+    .button-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 22px;
+    }
+
+    button {
+      border: none;
+      border-radius: 16px;
+      padding: 13px 20px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+    }
+
+    button:hover { transform: translateY(-2px); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      color: white;
+      box-shadow: 0 16px 30px rgba(51,93,255,0.24);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #21304d;
+      border: 1px solid rgba(148,163,184,0.28);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #0f9b8e, #14b8a6);
+      color: white;
+      box-shadow: 0 16px 30px rgba(20,184,166,0.22);
+    }
+
+    .stack { display: grid; gap: 20px; }
+
+    .result-box {
+      border-radius: 24px;
+      padding: 22px;
+      background: linear-gradient(180deg, #fbfdff 0%, #f5f8ff 100%);
+      border: 1px solid rgba(148,163,184,0.18);
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .score {
+      font-size: 46px;
+      font-weight: 900;
+      line-height: 1;
+      margin: 8px 0 0;
+      color: #10213d;
+    }
+
+    .progress-wrap { margin: 16px 0 12px; }
+
+    .progress-track {
+      width: 100%;
+      height: 14px;
+      border-radius: 999px;
+      background: #e8eefc;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #16a34a, #f59e0b, #e11d48);
+      transition: width 0.4s ease;
+    }
+
+    .progress-caption {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 9px 14px;
+      font-size: 12px;
+      font-weight: 800;
+      border: 1px solid transparent;
+      background: #eef2ff;
+      color: #4338ca;
+    }
+
+    .low { background: #dcfce7; color: #166534; border-color: rgba(22, 163, 74, 0.18); }
+    .medium { background: #fef3c7; color: #92400e; border-color: rgba(245, 158, 11, 0.22); }
+    .high { background: #ffe4e6; color: #9f1239; border-color: rgba(225, 29, 72, 0.18); }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .mini-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: white;
+      border: 1px solid rgba(148,163,184,0.16);
+    }
+
+    .mini-card span {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .mini-card strong { font-size: 16px; }
+
+    .list-clean {
+      display: grid;
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .list-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+      border: 1px solid rgba(148,163,184,0.18);
+    }
+
+    .list-item b { font-size: 13px; color: #1f3259; }
+
+    .impact {
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: #eff4ff;
+      color: #335dff;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .recommendation {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #f6fbfa 100%);
+      border: 1px solid rgba(20,184,166,0.14);
+      color: #29465a;
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .summary-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+      border: 1px solid rgba(148,163,184,0.18);
+    }
+
+    .summary-card span {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .summary-card strong { font-size: 20px; }
+
+    .table-wrap {
+      margin-top: 18px;
+      overflow: auto;
+      border-radius: 18px;
+      border: 1px solid rgba(148,163,184,0.18);
+      background: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1000px;
+      font-size: 13px;
+    }
+
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(148,163,184,0.12);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f6f9ff;
+      color: #28436c;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tr:hover td { background: #fbfdff; }
+    tbody tr { cursor: pointer; }
+    tbody tr.active-row td {
+      background: #eef4ff;
+    }
+
+    .system-card { margin-top: 24px; }
+
+    .system-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .system-step {
+      border-radius: 22px;
+      padding: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(244,248,255,0.94));
+      border: 1px solid rgba(148,163,184,0.18);
+      position: relative;
+      min-height: 170px;
+    }
+
+    .step-number {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      color: white;
+      font-weight: 800;
+      margin-bottom: 14px;
+      box-shadow: 0 10px 20px rgba(51,93,255,0.18);
+    }
+
+    .system-step h3 { margin: 0 0 8px; font-size: 16px; color: #16305f; }
+    .system-step p { margin: 0; font-size: 14px; line-height: 1.7; color: var(--muted); }
+
+    .footer-note {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: #f8fbff;
+      border: 1px dashed rgba(148,163,184,0.34);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .muted { color: var(--muted); }
+    .hidden { display: none !important; }
+
+    @media (max-width: 1080px) {
+      .main-grid { grid-template-columns: 1fr; }
+      .system-grid { grid-template-columns: repeat(2, 1fr); }
+      .summary-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .container { padding: 16px; }
+      .hero { padding: 24px; border-radius: 26px; }
+      .hero h1 { font-size: 28px; }
+      .hero-stats { grid-template-columns: 1fr; min-width: unset; width: 100%; }
+      .form-grid, .mini-grid, .system-grid { grid-template-columns: 1fr; }
+      .card { padding: 20px; }
+      .score { font-size: 36px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="hero">
+      <div class="hero-top">
+        <div>
+          <div class="eyebrow">🎓 Prototype Website AI untuk Prediksi Dropout Mahasiswa</div>
+          <h1>Sistem Prediksi Risiko Dropout Mahasiswa Berbasis Random Forest</h1>
+          <p>
+            Website ini dirancang sebagai media presentasi yang lebih menarik dan profesional untuk dosen,
+            dengan dukungan input satu mahasiswa maupun unggah dataset CSV secara massal, hasil prediksi,
+            faktor dominan, dan ringkasan analisis yang mudah dipahami.
+          </p>
+        </div>
+
+        <div class="hero-stats">
+          <div class="stat-card">
+            <div class="stat-label">Metode AI</div>
+            <div class="stat-value">Random Forest</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Mode Input</div>
+            <div class="stat-value">Manual & Upload CSV</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Jenis Output</div>
+            <div class="stat-value">Skor & Kategori Risiko</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Manfaat</div>
+            <div class="stat-value">Deteksi Dini Mahasiswa</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="main-grid">
+      <div class="card glass">
+        <h2>📝 Input Data Mahasiswa</h2>
+        <p class="subtitle">
+          Pilih mode input untuk simulasi prediksi. Mode manual cocok untuk demo satu mahasiswa,
+          sedangkan mode upload cocok untuk menampilkan banyak data sekaligus di depan dosen.
+        </p>
+
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="manualPanel" type="button">Input Manual</button>
+          <button class="tab-btn" data-tab="bulkPanel" type="button">Upload Dataset CSV</button>
+        </div>
+
+        <div id="manualPanel" class="tab-panel active">
+          <div class="section-chip-row">
+            <div class="chip">IPK</div>
+            <div class="chip">Kehadiran</div>
+            <div class="chip">Nilai SMA</div>
+            <div class="chip">KRS</div>
+            <div class="chip">Ekonomi</div>
+            <div class="chip">Riwayat Studi</div>
+          </div>
+
+          <form id="predictionForm">
+            <div class="form-grid">
+              <div class="field">
+                <label>Nama Mahasiswa</label>
+                <input type="text" id="studentName" placeholder="Contoh: Andi Saputra" />
+              </div>
+              <div class="field">
+                <label>NIM</label>
+                <input type="text" id="nim" placeholder="Contoh: 22101123" />
+              </div>
+              <div class="field">
+                <label>IPK</label>
+                <input type="number" step="0.01" id="gpa" placeholder="0.00 - 4.00" required />
+              </div>
+              <div class="field">
+                <label>Kehadiran (%)</label>
+                <input type="number" id="attendance" placeholder="0 - 100" required />
+              </div>
+              <div class="field">
+                <label>Nilai SMA</label>
+                <input type="number" id="highSchoolScore" placeholder="0 - 100" required />
+              </div>
+              <div class="field">
+                <label>Jumlah Mata Kuliah Diulang</label>
+                <input type="number" id="repeatedCourses" value="0" required />
+              </div>
+              <div class="field">
+                <label>Gagal KRS</label>
+                <input type="number" id="failedKrs" value="0" required />
+              </div>
+              <div class="field">
+                <label>Tunggakan Pembayaran</label>
+                <input type="number" id="paymentArrears" value="0" required />
+              </div>
+              <div class="field">
+                <label>Riwayat Cuti</label>
+                <input type="number" id="leaveHistory" value="0" required />
+              </div>
+              <div class="field">
+                <label>Keterlambatan Studi (semester)</label>
+                <input type="number" id="studyDelay" value="0" required />
+              </div>
+              <div class="field">
+                <label>Kondisi Ekonomi</label>
+                <select id="economicCondition">
+                  <option value="tinggi">Tinggi</option>
+                  <option value="sedang" selected>Sedang</option>
+                  <option value="rendah">Rendah</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Domisili</label>
+                <select id="domicile">
+                  <option value="dekat" selected>Dekat</option>
+                  <option value="jauh">Jauh</option>
+                </select>
+              </div>
+              <div class="field full">
+                <label>Tingkat Kesulitan Mata Kuliah</label>
+                <select id="courseDifficulty">
+                  <option value="rendah">Rendah</option>
+                  <option value="sedang" selected>Sedang</option>
+                  <option value="tinggi">Tinggi</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="button-row">
+              <button type="submit" class="btn-primary">Prediksi Risiko</button>
+              <button type="button" class="btn-secondary" onclick="resetForm()">Reset Data</button>
+            </div>
+          </form>
+        </div>
+
+        <div id="bulkPanel" class="tab-panel">
+          <div class="upload-box">
+            <div class="field full">
+              <label>Upload File CSV</label>
+              <input type="file" id="csvFile" accept=".csv" />
+            </div>
+            <div class="upload-note">
+              Gunakan file CSV dengan header berikut: <b>studentName,nim,gpa,attendance,highSchoolScore,repeatedCourses,failedKrs,paymentArrears,leaveHistory,studyDelay,economicCondition,domicile,courseDifficulty</b>
+            </div>
+            <div class="sample-box">Contoh isi CSV:
+studentName,nim,gpa,attendance,highSchoolScore,repeatedCourses,failedKrs,paymentArrears,leaveHistory,studyDelay,economicCondition,domicile,courseDifficulty
+Andi,22101,2.10,68,72,2,1,1,0,1,rendah,jauh,tinggi
+Budi,22102,3.20,90,85,0,0,0,0,0,sedang,dekat,sedang</div>
+            <div class="button-row">
+              <button type="button" class="btn-success" onclick="processCSV()">Proses Dataset</button>
+              <button type="button" class="btn-secondary" onclick="clearDataset()">Hapus Hasil Dataset</button>
+            </div>
+          </div>
+
+          <div id="bulkResult" class="hidden">
+            <div class="summary-grid">
+              <div class="summary-card">
+                <span>Data Dipilih</span>
+                <strong id="selectedRowInfo">Baris 1</strong>
+              </div>
+              <div class="summary-card">
+                <span>Total Data</span>
+                <strong id="totalRows">0</strong>
+              </div>
+              <div class="summary-card">
+                <span>Risiko Tinggi</span>
+                <strong id="highCount">0</strong>
+              </div>
+              <div class="summary-card">
+                <span>Rata-rata Skor</span>
+                <strong id="avgScore">0%</strong>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>No</th>
+                    <th>Nama</th>
+                    <th>NIM</th>
+                    <th>Skor</th>
+                    <th>Status</th>
+                    <th>Faktor Dominan</th>
+                  </tr>
+                </thead>
+                <tbody id="bulkTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="card glass">
+          <h2>📊 Hasil Prediksi</h2>
+          <div class="result-box">
+            <div class="result-header">
+              <div>
+                <div class="muted" style="font-size:13px; font-weight:700;">Skor Risiko Dropout</div>
+                <div class="score" id="riskScore">-</div>
+              </div>
+              <div id="riskBadge" class="badge">Belum diproses</div>
+            </div>
+
+            <div class="progress-wrap">
+              <div class="progress-track">
+                <div class="progress-bar" id="progressBar"></div>
+              </div>
+              <div class="progress-caption">
+                <span>Rendah</span>
+                <span>Sedang</span>
+                <span>Tinggi</span>
+              </div>
+            </div>
+
+            <div class="mini-grid">
+              <div class="mini-card">
+                <span>Mahasiswa</span>
+                <strong id="previewName">-</strong>
+              </div>
+              <div class="mini-card">
+                <span>NIM</span>
+                <strong id="previewNim">-</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card glass">
+          <h2>🔎 Faktor Dominan</h2>
+          <p class="subtitle">Faktor dengan pengaruh paling kuat terhadap hasil prediksi risiko mahasiswa.</p>
+          <ul id="factorList" class="list-clean">
+            <li class="list-item"><b>Isi data lalu klik prediksi.</b><span class="impact">Menunggu</span></li>
+          </ul>
+        </div>
+
+        <div class="card glass">
+          <h2>💡 Rekomendasi Tindak Lanjut</h2>
+          <p class="subtitle">Rekomendasi intervensi berdasarkan kategori risiko yang dihasilkan sistem.</p>
+          <div id="recommendationList" class="list-clean">
+            <div class="recommendation">Rekomendasi akan tampil setelah proses prediksi dilakukan. Pada mode upload dataset, klik salah satu baris pada tabel untuk melihat detail mahasiswa lain.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card glass system-card">
+      <h2>⚙️ Desain Sistem Random Forest</h2>
+      <p class="subtitle">
+        Alur kerja sistem dibangun mulai dari input data, pengolahan, proses prediksi, hingga rekomendasi tindak lanjut.
+      </p>
+      <div class="system-grid">
+        <div class="system-step">
+          <div class="step-number">1</div>
+          <h3>Input Data</h3>
+          <p>Admin atau pengguna memasukkan data akademik dan non-akademik mahasiswa ke dalam form atau upload dataset.</p>
+        </div>
+        <div class="system-step">
+          <div class="step-number">2</div>
+          <h3>Preprocessing</h3>
+          <p>Data dibersihkan, dicek kelengkapannya, lalu disiapkan agar sesuai dengan kebutuhan model prediksi.</p>
+        </div>
+        <div class="system-step">
+          <div class="step-number">3</div>
+          <h3>Model Random Forest</h3>
+          <p>Sistem memproses data melalui sejumlah decision tree untuk mengenali pola risiko dropout mahasiswa.</p>
+        </div>
+        <div class="system-step">
+          <div class="step-number">4</div>
+          <h3>Hasil Prediksi</h3>
+          <p>Model menghasilkan skor risiko dan kategori mahasiswa, yaitu risiko rendah, sedang, atau tinggi.</p>
+        </div>
+        <div class="system-step">
+          <div class="step-number">5</div>
+          <h3>Rekomendasi</h3>
+          <p>Sistem memberikan saran tindak lanjut agar kampus dapat melakukan intervensi lebih cepat dan tepat.</p>
+        </div>
+      </div>
+      <div class="footer-note">
+        Catatan: versi ini adalah prototype HTML, CSS, dan JavaScript dengan logika simulasi prediksi dan dukungan upload CSV. Untuk implementasi Random Forest yang sesungguhnya, bagian prediksi dapat dihubungkan dengan backend Python seperti Flask atau Django.
+      </div>
+    </section>
+  </div>
+
+  <script>
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function getRiskLevel(score) {
+      if (score >= 70) return { label: 'Berisiko Tinggi', className: 'high' };
+      if (score >= 40) return { label: 'Berisiko Sedang', className: 'medium' };
+      return { label: 'Berisiko Rendah', className: 'low' };
+    }
+
+    function calculateScore(data) {
+      let score = 0;
+      if (data.gpa < 2) score += 34;
+      else if (data.gpa < 2.5) score += 22;
+      else if (data.gpa < 3) score += 10;
+
+      if (data.attendance < 60) score += 24;
+      else if (data.attendance < 75) score += 16;
+      else if (data.attendance < 85) score += 8;
+
+      if (data.highSchoolScore < 70) score += 16;
+      else if (data.highSchoolScore < 80) score += 8;
+
+      if (data.repeatedCourses >= 3) score += 18;
+      else if (data.repeatedCourses >= 1) score += 10;
+
+      if (data.failedKrs >= 3) score += 16;
+      else if (data.failedKrs >= 1) score += 8;
+
+      if (data.paymentArrears > 1) score += 18;
+      else if (data.paymentArrears === 1) score += 10;
+
+      if (data.leaveHistory > 0) score += 10;
+      if (data.studyDelay > 1) score += 12;
+      else if (data.studyDelay === 1) score += 7;
+
+      if (data.economicCondition === 'rendah') score += 12;
+      else if (data.economicCondition === 'sedang') score += 5;
+
+      if (data.domicile === 'jauh') score += 6;
+      if (data.courseDifficulty === 'tinggi') score += 8;
+      else if (data.courseDifficulty === 'sedang') score += 4;
+
+      return clamp(Math.round(score), 0, 100);
+    }
+
+    function getFactors(data) {
+      const factors = [];
+      if (data.gpa < 2.5) factors.push({ name: 'IPK rendah', impact: 28 });
+      if (data.attendance < 75) factors.push({ name: 'Kehadiran rendah', impact: 22 });
+      if (data.highSchoolScore < 75) factors.push({ name: 'Nilai SMA rendah', impact: 14 });
+      if (data.repeatedCourses >= 2) factors.push({ name: 'Pengulangan mata kuliah', impact: 15 });
+      if (data.failedKrs >= 2) factors.push({ name: 'Gagal KRS', impact: 14 });
+      if (data.paymentArrears > 0) factors.push({ name: 'Tunggakan pembayaran', impact: 18 });
+      if (data.leaveHistory > 0) factors.push({ name: 'Riwayat cuti', impact: 12 });
+      if (data.studyDelay > 0) factors.push({ name: 'Keterlambatan studi', impact: 11 });
+      if (data.economicCondition === 'rendah') factors.push({ name: 'Kondisi ekonomi lemah', impact: 12 });
+      if (data.domicile === 'jauh') factors.push({ name: 'Domisili jauh', impact: 8 });
+      if (data.courseDifficulty === 'tinggi') factors.push({ name: 'Mata kuliah sulit', impact: 10 });
+      return factors.sort((a, b) => b.impact - a.impact);
+    }
+
+    function getRecommendations(score) {
+      if (score >= 70) {
+        return [
+          'Lakukan pendampingan akademik intensif kepada mahasiswa.',
+          'Jadwalkan monitoring berkala dan sesi konseling rutin.',
+          'Evaluasi kemungkinan bantuan finansial atau administrasi akademik.'
+        ];
+      }
+      if (score >= 40) {
+        return [
+          'Lakukan pemantauan akademik secara berkala setiap semester.',
+          'Tingkatkan kehadiran dan fokus pada mata kuliah yang sulit.',
+          'Berikan pembinaan akademik ringan melalui dosen wali atau mentor.'
+        ];
+      }
+      return [
+        'Pertahankan performa akademik mahasiswa saat ini.',
+        'Lakukan monitoring rutin sebagai bentuk pencegahan dini.',
+        'Berikan penguatan motivasi dan dukungan belajar berkelanjutan.'
+      ];
+    }
+
+    function setTabs() {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+          btn.classList.add('active');
+          document.getElementById(btn.dataset.tab).classList.add('active');
+        });
+      });
+    }
+
+    function renderSingleResult(data, score, level, factors, recommendations) {
+      document.getElementById('riskScore').textContent = score + '%';
+      document.getElementById('previewName').textContent = data.studentName || '-';
+      document.getElementById('previewNim').textContent = data.nim || '-';
+      document.getElementById('progressBar').style.width = score + '%';
+
+      const badge = document.getElementById('riskBadge');
+      badge.textContent = level.label;
+      badge.className = 'badge ' + level.className;
+
+      if (factors.length) {
+        document.getElementById('factorList').innerHTML = factors.slice(0, 5).map(item => `
+          <li class="list-item">
+            <b>${item.name}</b>
+            <span class="impact">Impact ${item.impact}</span>
+          </li>
+        `).join('');
+      } else {
+        document.getElementById('factorList').innerHTML = '<li class="list-item"><b>Tidak ada faktor dominan yang terdeteksi</b><span class="impact">Stabil</span></li>';
+      }
+
+      document.getElementById('recommendationList').innerHTML = recommendations.map(item => `
+        <div class="recommendation">${item}</div>
+      `).join('');
+    }
+
+    document.getElementById('predictionForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const data = {
+        studentName: document.getElementById('studentName').value || '-',
+        nim: document.getElementById('nim').value || '-',
+        gpa: parseFloat(document.getElementById('gpa').value) || 0,
+        attendance: parseFloat(document.getElementById('attendance').value) || 0,
+        highSchoolScore: parseFloat(document.getElementById('highSchoolScore').value) || 0,
+        repeatedCourses: parseInt(document.getElementById('repeatedCourses').value) || 0,
+        failedKrs: parseInt(document.getElementById('failedKrs').value) || 0,
+        paymentArrears: parseInt(document.getElementById('paymentArrears').value) || 0,
+        leaveHistory: parseInt(document.getElementById('leaveHistory').value) || 0,
+        studyDelay: parseInt(document.getElementById('studyDelay').value) || 0,
+        economicCondition: document.getElementById('economicCondition').value,
+        domicile: document.getElementById('domicile').value,
+        courseDifficulty: document.getElementById('courseDifficulty').value
+      };
+
+      const score = calculateScore(data);
+      const level = getRiskLevel(score);
+      const factors = getFactors(data);
+      const recommendations = getRecommendations(score);
+      renderSingleResult(data, score, level, factors, recommendations);
+    });
+
+    function resetForm() {
+      document.getElementById('predictionForm').reset();
+      document.getElementById('riskScore').textContent = '-';
+      document.getElementById('previewName').textContent = '-';
+      document.getElementById('previewNim').textContent = '-';
+      document.getElementById('progressBar').style.width = '0%';
+      const badge = document.getElementById('riskBadge');
+      badge.textContent = 'Belum diproses';
+      badge.className = 'badge';
+      document.getElementById('factorList').innerHTML = '<li class="list-item"><b>Isi data lalu klik prediksi.</b><span class="impact">Menunggu</span></li>';
+      document.getElementById('recommendationList').innerHTML = '<div class="recommendation">Rekomendasi akan tampil setelah proses prediksi dilakukan. Pada mode upload dataset, klik salah satu baris pada tabel untuk melihat detail mahasiswa lain.</div>';
+    }
+
+    function parseCSVLine(line) {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          result.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      result.push(current.trim());
+      return result;
+    }
+
+    function processCSV() {
+      const fileInput = document.getElementById('csvFile');
+      const file = fileInput.files[0];
+      if (!file) {
+        alert('Pilih file CSV terlebih dahulu.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result.trim();
+        if (!text) {
+          alert('File CSV kosong.');
+          return;
+        }
+
+        const lines = text.split(/\r?\n/).filter(Boolean);
+        if (lines.length < 2) {
+          alert('File CSV harus memiliki header dan minimal 1 baris data.');
+          return;
+        }
+
+        const headers = parseCSVLine(lines[0]);
+        const rows = [];
+
+        for (let i = 1; i < lines.length; i++) {
+          const values = parseCSVLine(lines[i]);
+          const row = {};
+          headers.forEach((header, index) => {
+            row[header] = values[index] !== undefined ? values[index] : '';
+          });
+          rows.push({
+            studentName: row.studentName || '-',
+            nim: row.nim || '-',
+            gpa: parseFloat(row.gpa) || 0,
+            attendance: parseFloat(row.attendance) || 0,
+            highSchoolScore: parseFloat(row.highSchoolScore) || 0,
+            repeatedCourses: parseInt(row.repeatedCourses) || 0,
+            failedKrs: parseInt(row.failedKrs) || 0,
+            paymentArrears: parseInt(row.paymentArrears) || 0,
+            leaveHistory: parseInt(row.leaveHistory) || 0,
+            studyDelay: parseInt(row.studyDelay) || 0,
+            economicCondition: (row.economicCondition || 'sedang').toLowerCase(),
+            domicile: (row.domicile || 'dekat').toLowerCase(),
+            courseDifficulty: (row.courseDifficulty || 'sedang').toLowerCase()
+          });
+        }
+
+        renderBulkResults(rows);
+      };
+
+      reader.readAsText(file);
+    }
+
+    function renderBulkResults(rows) {
+      const tbody = document.getElementById('bulkTableBody');
+      let highCount = 0;
+      let totalScore = 0;
+      tbody.innerHTML = '';
+
+      rows.forEach((row, index) => {
+        const score = calculateScore(row);
+        const level = getRiskLevel(score);
+        const factors = getFactors(row).slice(0, 3).map(f => f.name).join(', ') || 'Stabil';
+        totalScore += score;
+        if (score >= 70) highCount++;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${row.studentName}</td>
+          <td>${row.nim}</td>
+          <td><b>${score}%</b></td>
+          <td><span class="badge ${level.className}">${level.label}</span></td>
+          <td>${factors}</td>
+        `;
+
+        tr.addEventListener('click', function() {
+          document.querySelectorAll('#bulkTableBody tr').forEach(r => r.classList.remove('active-row'));
+          tr.classList.add('active-row');
+          const fullFactors = getFactors(row);
+          const recommendations = getRecommendations(score);
+          renderSingleResult(row, score, level, fullFactors, recommendations);
+          document.getElementById('selectedRowInfo').textContent = 'Baris ' + (index + 1);
+        });
+
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('totalRows').textContent = rows.length;
+      document.getElementById('highCount').textContent = highCount;
+      document.getElementById('avgScore').textContent = rows.length ? Math.round(totalScore / rows.length) + '%' : '0%';
+      document.getElementById('selectedRowInfo').textContent = rows.length ? 'Baris 1' : '-';
+      document.getElementById('bulkResult').classList.remove('hidden');
+
+      if (rows.length > 0) {
+        const topRow = rows[0];
+        const score = calculateScore(topRow);
+        const level = getRiskLevel(score);
+        const factors = getFactors(topRow);
+        const recommendations = getRecommendations(score);
+        renderSingleResult(topRow, score, level, factors, recommendations);
+        const firstTr = document.querySelector('#bulkTableBody tr');
+        if (firstTr) firstTr.classList.add('active-row');
+      }
+    }
+
+    function clearDataset() {
+      document.getElementById('csvFile').value = '';
+      document.getElementById('bulkTableBody').innerHTML = '';
+      document.getElementById('bulkResult').classList.add('hidden');
+      document.getElementById('totalRows').textContent = '0';
+      document.getElementById('highCount').textContent = '0';
+      document.getElementById('avgScore').textContent = '0%';
+    }
+
+    setTabs();
+  </script>
+</body>
+</html>
